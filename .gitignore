@@ -1,53 +1,41 @@
-# Node dependencies
-node_modules/
-.pnp
-.pnp.js
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Next.js build output
-.next/
-out/
-build/
-dist/
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
-# Environment files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-*.env
+# testing
+/coverage
 
-# Debug / Logs
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 .pnpm-debug.log*
 
-# Testing & Coverage
-coverage/
-test-results/
-playwright-report/
-blob-report/
-playwright/.cache/
+# env files (can opt-in for committing if needed)
+.env*
 
-# OS files
-Thumbs.db
-[Dd]esktop.ini
-.DS_Store
+# vercel
+.vercel
 
-# IDE / Editor
-.vscode/*
-!.vscode/extensions.json
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Temporary / Scratch
-scratch/
-tmp/
-*.tmp
+# typescript
+*.tsbuildinfo
+next-env.d.ts
