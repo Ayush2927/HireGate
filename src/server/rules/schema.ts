@@ -58,3 +58,6 @@ export interface EvaluationResult {
     eligible: boolean;
     failedRules: FailedRuleDiagnostic[];
 }
+
+
+
