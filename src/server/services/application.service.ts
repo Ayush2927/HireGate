@@ -7,7 +7,6 @@ import {
   auditLogs,
   type Application,
   type Student,
-  type Drive,
 } from '../db/schema';
 import { evaluateRules } from '../rules/evaluator';
 

@@ -2,7 +2,6 @@ import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import {
   students,
-  users,
   auditLogs,
   type Student,
   type User,

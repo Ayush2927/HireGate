@@ -77,9 +77,10 @@ export const authConfig: NextAuthConfig = {
     // B. Attach role & collegeId to the JWT token
     async jwt({ token, user }) {
       if (user) {
+        const u = user as { id?: string; role?: string; collegeId?: string };
         token.id = user.id;
-        token.role = (user as any).role;
-        token.collegeId = (user as any).collegeId;
+        token.role = u.role;
+        token.collegeId = u.collegeId;
       }
       return token;
     },
@@ -87,9 +88,10 @@ export const authConfig: NextAuthConfig = {
     // C. Expose role & collegeId to the client session
     async session({ session, token }) {
       if (session.user && token) {
-        session.user.id = (token.id as string) || session.user.id;
-        (session.user as any).role = token.role;
-        (session.user as any).collegeId = token.collegeId;
+        const su = session.user as { id?: string; role?: unknown; collegeId?: unknown };
+        su.id = (token.id as string) || session.user.id;
+        su.role = token.role;
+        su.collegeId = token.collegeId;
       }
       return session;
     },

@@ -29,10 +29,11 @@ export async function createDriveAction(data: CreateDriveInput) {
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to create drive.';
     return {
       success: false,
-      error: error.message || 'Failed to create drive.',
+      error: message,
     };
   }
 }
@@ -58,10 +59,11 @@ export async function publishDriveAction(driveId: string) {
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to publish drive.';
     return {
       success: false,
-      error: error.message || 'Failed to publish drive.',
+      error: message,
     };
   }
 }

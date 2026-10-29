@@ -56,10 +56,11 @@ export async function verifyStudentAction(studentUserId: string) {
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to verify student.';
     return {
       success: false,
-      error: error.message || 'Failed to verify student.',
+      error: message,
     };
   }
 }

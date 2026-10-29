@@ -2,7 +2,6 @@ import { eq, and, gte, desc } from 'drizzle-orm';
 import { db } from '../db';
 import {
   drives,
-  companies,
   driveRounds,
   applications,
   auditLogs,

@@ -45,28 +45,28 @@ function atomicRuleToSql(rule: AtomicRule): SQL | undefined {
   if (!column) return undefined;
 
   // For numeric fields like cgpa and percentages, format number as string for Postgres numeric columns
-  const val = typeof rule.value === 'number' ? rule.value.toString() : rule.value;
+  const val = typeof rule.value === 'number' ? rule.value.toString() : (rule.value as unknown as string);
 
   switch (rule.op) {
     case 'eq':
-      return eq(column, val as any);
+      return eq(column, val);
     case 'neq':
-      return ne(column, val as any);
+      return ne(column, val);
     case 'gt':
-      return gt(column, val as any);
+      return gt(column, val);
     case 'gte':
-      return gte(column, val as any);
+      return gte(column, val);
     case 'lt':
-      return lt(column, val as any);
+      return lt(column, val);
     case 'lte':
-      return lte(column, val as any);
+      return lte(column, val);
     case 'in':
       return Array.isArray(rule.value) && rule.value.length > 0
-        ? inArray(column, rule.value as any[])
+        ? inArray(column, rule.value as unknown as string[])
         : undefined;
     case 'nin':
       return Array.isArray(rule.value) && rule.value.length > 0
-        ? notInArray(column, rule.value as any[])
+        ? notInArray(column, rule.value as unknown as string[])
         : undefined;
     default:
       return undefined;
