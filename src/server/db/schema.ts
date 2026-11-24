@@ -270,15 +270,16 @@ export const collegesRelations = relations(colleges, ({ many }) => ({
 
 export const usersRelations = relations(users, ({ one, many }) => ({
     college: one(colleges, { fields: [users.collegeId], references: [colleges.id] }),
-    student: one(students, { fields: [users.id], references: [students.userId] }),
+    student: one(students, { fields: [users.id], references: [students.userId], relationName: 'student_user' }),
+    verifiedStudents: many(students, { relationName: 'student_verifier' }),
     notifications: many(notifications),
     auditLogs: many(auditLogs),
 }));
 
 
 export const studentsRelations = relations(students, ({ one, many }) => ({
-    user: one(users, { fields: [students.userId], references: [users.id] }),
-    verifier: one(users, { fields: [students.verifiedBy], references: [users.id] }),
+    user: one(users, { fields: [students.userId], references: [users.id], relationName: 'student_user' }),
+    verifier: one(users, { fields: [students.verifiedBy], references: [users.id], relationName: 'student_verifier' }),
     resumes: many(resumes),
     applications: many(applications),
 }));
@@ -305,6 +306,35 @@ export const applicationsRelations = relations(applications, ({ one, many }) => 
 export const driveRoundsRelations = relations(driveRounds, ({ one, many }) => ({
     drive: one(drives, { fields: [driveRounds.driveId], references: [drives.id] }),
     results: many(roundResults),
+}));
+
+export const companiesRelations = relations(companies, ({ one, many }) => ({
+    college: one(colleges, { fields: [companies.collegeId], references: [colleges.id] }),
+    drives: many(drives),
+}));
+
+export const resumesRelations = relations(resumes, ({ one, many }) => ({
+    student: one(students, { fields: [resumes.studentId], references: [students.userId] }),
+    applications: many(applications),
+}));
+
+export const driveCoordinatorsRelations = relations(driveCoordinators, ({ one }) => ({
+    drive: one(drives, { fields: [driveCoordinators.driveId], references: [drives.id] }),
+    user: one(users, { fields: [driveCoordinators.userId], references: [users.id] }),
+}));
+
+export const roundResultsRelations = relations(roundResults, ({ one }) => ({
+    application: one(applications, { fields: [roundResults.applicationId], references: [applications.id] }),
+    round: one(driveRounds, { fields: [roundResults.roundId], references: [driveRounds.id] }),
+    updater: one(users, { fields: [roundResults.updatedBy], references: [users.id] }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+    user: one(users, { fields: [notifications.userId], references: [users.id] }),
+}));
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+    actor: one(users, { fields: [auditLogs.actorId], references: [users.id] }),
 }));
 // ============================================================================
 // INFERRED TYPES
