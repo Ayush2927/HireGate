@@ -10,6 +10,9 @@ function createMockUser(role: User['role']): User {
     name: 'Test User',
     role,
     createdAt: new Date(),
+    tokenVersion: 0,
+    companyId: null,
+    passwordHash: null
   };
 }
 

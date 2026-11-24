@@ -65,7 +65,11 @@ export const users = pgTable('users', {
     email: text('email').notNull().unique(),
     name: text('name').notNull(),
     role: userRoleEnum('role').default('STUDENT').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    tokenVersion: integer('token_version').default(0).notNull(),
+    companyId: uuid('company_id')
+        .references(() => companies.id, { onDelete: 'set null' }),
+    passwordHash: text('password_hash')
 })
 
 

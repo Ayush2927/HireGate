@@ -1,9 +1,9 @@
 import type { NextAuthConfig } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import GoogleProvider from 'next-auth/providers/google';
+import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { users } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { verifyPassword } from './password';
 
 /**
  * Validates whether an email belongs to the allowed college domain.
@@ -16,82 +16,92 @@ export function isAllowedCollegeDomain(email: string): boolean {
 
 export const authConfig: NextAuthConfig = {
   providers: [
-    // 1. Google OAuth Provider (for production)
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || 'dummy-google-client-id',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy-google-client-secret',
-    }),
-
-    // 2. Credentials Provider (for local development & testing different roles)
     CredentialsProvider({
-      name: 'College Credentials',
+      name: 'HireGate Credentials',
       credentials: {
-        email: { label: 'College Email', type: 'email', placeholder: 'ayush@college.edu' },
+        email: { label: 'Email', type: 'email', placeholder: 'you@college.edu' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || typeof credentials.email !== 'string') {
+        if (
+          typeof credentials?.email !== 'string' ||
+          typeof credentials?.password !== 'string'
+        ) {
           return null;
         }
 
         const email = credentials.email.toLowerCase().trim();
+        const password = credentials.password;
 
-        // Security check: Must end with @college.edu
-        if (!isAllowedCollegeDomain(email)) {
-          throw new Error(
-            `Only emails from @${process.env.COLLEGE_EMAIL_DOMAIN || 'college.edu'} are allowed to access HireGate.`
-          );
-        }
-
-        // Look up the user in PostgreSQL
+        // 1. Look up user in Neon PostgreSQL
         const user = await db.query.users.findFirst({
           where: eq(users.email, email),
         });
 
-        if (!user) {
+        if (!user || !user.passwordHash) {
           return null;
         }
 
+        // 2. Domain check: everyone except RECRUITER must use the college domain
+        if (user.role !== 'RECRUITER' && !isAllowedCollegeDomain(user.email)) {
+          return null;
+        }
+
+        // 3. Constant-time password verification
+        const isValid = verifyPassword(password, user.passwordHash);
+        if (!isValid) {
+          return null;
+        }
+
+        // 4. Return fields to be embedded into the encrypted JWT cookie
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
           collegeId: user.collegeId,
+          companyId: user.companyId,
+          tokenVersion: user.tokenVersion,
         };
       },
     }),
   ],
 
   callbacks: {
-    // A. Check domain before allowing sign-in
-    async signIn({ user }) {
-      if (!user.email) return false;
-
-      if (!isAllowedCollegeDomain(user.email)) {
-        return false; // Blocks sign-in at the gate
-      }
-
-      return true;
-    },
-
-    // B. Attach role & collegeId to the JWT token
+    // Runs on sign-in and whenever the JWT is read
     async jwt({ token, user }) {
       if (user) {
-        const u = user as { id?: string; role?: string; collegeId?: string };
-        token.id = user.id;
+        const u = user as {
+          id?: string;
+          role?: string;
+          collegeId?: string;
+          companyId?: string | null;
+          tokenVersion?: number;
+        };
+        token.id = u.id;
         token.role = u.role;
         token.collegeId = u.collegeId;
+        token.companyId = u.companyId ?? null;
+        token.tokenVersion = u.tokenVersion ?? 0;
       }
       return token;
     },
 
-    // C. Expose role & collegeId to the client session
+    // Exposes token claims on `await auth()` and `useSession()`
     async session({ session, token }) {
       if (session.user && token) {
-        const su = session.user as { id?: string; role?: unknown; collegeId?: unknown };
+        const su = session.user as unknown as {
+          id?: string;
+          role?: unknown;
+          collegeId?: unknown;
+          companyId?: unknown;
+          tokenVersion?: unknown;
+        };
         su.id = (token.id as string) || session.user.id;
         su.role = token.role;
         su.collegeId = token.collegeId;
+        su.companyId = token.companyId;
+        su.tokenVersion = token.tokenVersion;
       }
       return session;
     },
@@ -104,6 +114,7 @@ export const authConfig: NextAuthConfig = {
 
   session: {
     strategy: 'jwt',
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24,    // Refresh cookie once per 24 hours of activity
   },
 };
-
