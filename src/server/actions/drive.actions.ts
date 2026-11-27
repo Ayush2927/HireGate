@@ -1,24 +1,21 @@
 'use server';
 
-import { auth } from '../auth';
+import { getCurrentUser } from '../auth/session';
 import {
   createDrive,
   publishDrive,
   type CreateDriveInput,
 } from '../services/drive.service';
 import { revalidatePath } from 'next/cache';
-import type { User } from '../db/schema';
 
 /**
  * Server Action: Create a Placement Drive (Admin Only).
  */
 export async function createDriveAction(data: CreateDriveInput) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const actor = await getCurrentUser();
+  if (!actor) {
     return { success: false, error: 'You must be logged in.' };
   }
-
-  const actor = session.user as unknown as User;
 
   try {
     const result = await createDrive(actor, data);
@@ -43,12 +40,10 @@ export async function createDriveAction(data: CreateDriveInput) {
  * Transitions drive from DRAFT -> PUBLISHED.
  */
 export async function publishDriveAction(driveId: string) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const actor = await getCurrentUser();
+  if (!actor) {
     return { success: false, error: 'You must be logged in.' };
   }
-
-  const actor = session.user as unknown as User;
 
   try {
     const result = await publishDrive(actor, driveId);

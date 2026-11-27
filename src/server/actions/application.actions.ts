@@ -1,6 +1,6 @@
 'use server';
 
-import { auth } from '../auth';
+import { getCurrentUser } from '../auth/session';
 import { applyToDrive, type ApplyResult } from '../services/application.service';
 import { revalidatePath } from 'next/cache';
 
@@ -13,9 +13,9 @@ export async function applyToDriveAction(
   resumeId?: string,
   idempotencyKey?: string
 ): Promise<ApplyResult> {
-  // 1. Authenticate the caller
-  const session = await auth();
-  if (!session?.user?.id) {
+  // 1. Authenticate the caller & verify tokenVersion
+  const user = await getCurrentUser();
+  if (!user) {
     return {
       success: false,
       error: {
@@ -27,7 +27,7 @@ export async function applyToDriveAction(
 
   // 2. Call the concurrency-safe transactional backend service
   const result = await applyToDrive({
-    studentId: session.user.id,
+    studentId: user.id,
     driveId,
     resumeId,
     idempotencyKey,

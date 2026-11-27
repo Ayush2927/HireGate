@@ -1,13 +1,12 @@
 'use server';
 
-import { auth } from '../auth';
+import { getCurrentUser } from '../auth/session';
 import {
   upsertStudentProfile,
   verifyStudentProfile,
   type UpsertStudentProfileInput,
 } from '../services/student.service';
 import { revalidatePath } from 'next/cache';
-import type { User } from '../db/schema';
 
 /**
  * Server Action: Update or Create Student Profile.
@@ -17,12 +16,11 @@ export async function updateProfileAction(
   data: UpsertStudentProfileInput,
   targetUserId?: string
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const actor = await getCurrentUser();
+  if (!actor) {
     return { success: false, error: 'You must be logged in to update your profile.' };
   }
 
-  const actor = session.user as unknown as User;
   const targetId = targetUserId || actor.id;
 
   const result = await upsertStudentProfile(actor, targetId, data);
@@ -40,12 +38,10 @@ export async function updateProfileAction(
  * Locks academic marks and creates an audit log entry.
  */
 export async function verifyStudentAction(studentUserId: string) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const actor = await getCurrentUser();
+  if (!actor) {
     return { success: false, error: 'You must be logged in.' };
   }
-
-  const actor = session.user as unknown as User;
 
   try {
     const result = await verifyStudentProfile(actor, studentUserId);
