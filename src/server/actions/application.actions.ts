@@ -3,6 +3,7 @@
 import { getCurrentUser } from '../auth/session';
 import { applyToDrive, type ApplyResult } from '../services/application.service';
 import { revalidatePath } from 'next/cache';
+import { checkAuthRateLimit } from '../redis';
 
 /**
  * Server Action: Submit Application to a Drive.
@@ -23,6 +24,18 @@ export async function applyToDriveAction(
         message: 'You must be logged in to apply.',
       },
     };
+  }
+
+  const rate = await checkAuthRateLimit(`apply:${user.id}`)
+
+  if (!rate.allowed) {
+    return {
+      success: false,
+      error: {
+        code: 'INELIGIBLE',
+        message: 'Too many applications. Try again in a minute'
+      }
+    }
   }
 
   // 2. Call the concurrency-safe transactional backend service

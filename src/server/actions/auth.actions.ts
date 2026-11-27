@@ -7,6 +7,7 @@ import { colleges, users } from '../db/schema';
 import { auth, signOut } from '../auth';
 import { isAllowedCollegeDomain } from '../auth/config';
 import { hashPassword } from '../auth/password';
+import { checkAuthRateLimit } from '../redis';
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, 'Full name is required.'),
@@ -36,6 +37,15 @@ export async function registerStudentAction(
   }
 
   const { name, collegeName, email, password } = parsed.data;
+
+  const rate = await checkAuthRateLimit(`register:${email}`);
+
+  if (!rate.allowed) {
+    return {
+      success: false,
+      error: 'Too many registration attempts. Please try again in a minute'
+    }
+  }
 
   // 1. Enforce institutional email domain
   if (!isAllowedCollegeDomain(email)) {
