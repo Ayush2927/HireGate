@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
@@ -29,7 +30,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className={`${geistSans.className} min-h-full flex flex-col font-sans antialiased text-slate-900 bg-[#f8fafc]`}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <Suspense fallback={<div className="min-h-screen bg-[#f8fafc]" />}>
+            {children}
+          </Suspense>
+        </Providers>
       </body>
     </html>
   );
